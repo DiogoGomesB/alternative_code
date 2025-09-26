@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <title>Chatbot Inteligente Colaborativo</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 1em; }
+        #chat { border: 1px solid #ccc; height: 400px; overflow-y: scroll; padding: 1em; margin-bottom: 1em; }
+        .user { text-align: right; color: blue; }
+        .assistant { text-align: left; color: green; }
+        #message { width: 80%; padding: 0.5em; }
+        button { padding: 0.5em 1em; }
+    </style>
+</head>
+<body>
+    <h1>Chatbot Inteligente Colaborativo</h1>
+    <div id="chat"></div>
+    <input id="message" type="text" placeholder="Digite sua mensagem..." />
+    <button onclick="sendMessage()">Enviar</button>
+    <button onclick="resetChat()">Resetar</button>
+
+    <script>
+        const chatDiv = document.getElementById('chat');
+        const messageInput = document.getElementById('message');
+
+        function appendMessage(text, sender) {
+            const p = document.createElement('p');
+            p.textContent = text;
+            p.className = sender;
+            chatDiv.appendChild(p);
+            chatDiv.scrollTop = chatDiv.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+            appendMessage("Você: " + message, 'user');
+            messageInput.value = '';
+            try {
+                const response = await fetch('http://localhost:5000/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message})
+                });
+                const data = await response.json();
+                if (data.reply) {
+                    appendMessage("Chatbot: " + data.reply, 'assistant');
+                } else if (data.error) {
+                    appendMessage("Erro: " + data.error, 'assistant');
+                }
+            } catch (error) {
+                appendMessage("Erro de conexão", 'assistant');
+            }
+        }
+
+        async function resetChat() {
+            await fetch('http://localhost:5000/reset', {method: 'POST'});
+            chatDiv.innerHTML = '';
+        }
+    </script>
+</body>
+</html>
